@@ -1,0 +1,51 @@
+name: Bug report
+description: Something in the package does not behave as documented.
+labels: [bug]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not paste API keys, secrets or `sid` cookies. Redact them first.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: >
+        The smallest code that shows the problem. A failing test using `Http::fake()`
+        is the fastest possible route to a fix.
+      render: php
+    validations:
+      required: true
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Package version
+      placeholder: 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: PHP and Laravel versions
+      placeholder: PHP 8.4, Laravel 12
+    validations:
+      required: true
+
+  - type: input
+    id: erpnext-version
+    attributes:
+      label: ERPNext / Frappe version
+      description: Leave blank if the problem does not involve a live site.
+      placeholder: ERPNext 15
