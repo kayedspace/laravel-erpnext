@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest something the package should be able to do.
+labels: [enhancement]
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that this package makes hard today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+      description: >
+        Sketch the API you would want to write. Bear in mind that any doctype is already
+        reachable by name — `Erpnext::doctype('Whatever')` — so a new typed class is
+        rarely the answer.
+      render: php
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you are doing instead
+      description: The workaround you have now, if any.

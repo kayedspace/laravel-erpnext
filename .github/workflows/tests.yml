@@ -1,0 +1,48 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4']
+        # Laravel 11 is still supported in composer.json, but it's past security
+        # support: three advisories cover the whole 11.x branch with no backported
+        # fix, so composer's default block policy won't let a runner download it.
+        # ponytail: untested here, not unsupported. Add the row back if 11.x ever
+        # gets a clean release, or drop ^11.0 from composer.json to stop claiming it.
+        laravel: ['12.*', '13.*']
+        include:
+          # Testbench tracks the framework major it supports, so the two are pinned
+          # together — otherwise composer resolves a testbench that boots a different
+          # Laravel than the one under test.
+          - laravel: '12.*'
+            testbench: '10.*'
+          - laravel: '13.*'
+            testbench: '11.*'
+
+    name: PHP ${{ matrix.php }} — Laravel ${{ matrix.laravel }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer require "illuminate/contracts:${{ matrix.laravel }}" --no-interaction --no-update
+          composer require "orchestra/testbench:${{ matrix.testbench }}" --dev --no-interaction --no-update
+          composer update --prefer-dist --no-interaction --no-progress
+
+      - name: Run tests
+        run: vendor/bin/pest

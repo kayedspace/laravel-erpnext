@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="Laravel ERPNext">
+  <title>Laravel ERPNext</title>
+  <!--
+    Three record plates in isometric projection: the doctypes below, the client on top.
+
+    Each plate is a 2:1 rhombus with two extruded faces, drawn back to front. The depth
+    is real geometry, not shading, so the mark stays crisp at any size and in one colour.
+  -->
+  <path d="M12 67.5 L50 86.5 L50 95.5 L12 76.5 Z" fill="#4E4EA8"/>
+  <path d="M88 67.5 L50 86.5 L50 95.5 L88 76.5 Z" fill="#4E4EA8"/>
+  <path d="M50 48.5 L88 67.5 L50 86.5 L12 67.5 Z" fill="#6969D2"/>
+  <path d="M12 45.5 L50 64.5 L50 73.5 L12 54.5 Z" fill="#6666C4"/>
+  <path d="M88 45.5 L50 64.5 L50 73.5 L88 54.5 Z" fill="#6666C4"/>
+  <path d="M50 26.5 L88 45.5 L50 64.5 L12 45.5 Z" fill="#8A8AE8"/>
+  <path d="M12 23.5 L50 42.5 L50 51.5 L12 32.5 Z" fill="#E05A42"/>
+  <path d="M88 23.5 L50 42.5 L50 51.5 L88 32.5 Z" fill="#E05A42"/>
+  <path d="M50 4.5 L88 23.5 L50 42.5 L12 23.5 Z" fill="#FF7B62"/>
+</svg>

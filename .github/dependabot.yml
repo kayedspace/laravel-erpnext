@@ -1,0 +1,12 @@
+version: 2
+
+updates:
+  # Only the actions are pinned to versions this repository controls. Composer
+  # dependencies are deliberately left out: a library declares ranges, and letting a
+  # bot bump a lock file that consumers never see is noise.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: 'ci'

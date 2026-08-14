@@ -1,0 +1,84 @@
+{
+    "name": "kayedspace/laravel-erpnext",
+    "description": "A fluent ERPNext and Frappe REST client for Laravel: a doctype query builder, typed documents, four authentication schemes and file uploads.",
+    "keywords": [
+        "laravel",
+        "erpnext",
+        "frappe",
+        "erp",
+        "api-client",
+        "rest",
+        "doctype",
+        "integration",
+        "accounting",
+        "php"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ali Youssef Kayed",
+            "email": "3likayed@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/contracts": "^11.0|^12.0|^13.0",
+        "illuminate/http": "^11.0|^12.0|^13.0",
+        "illuminate/support": "^11.0|^12.0|^13.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Kayedspace\\Erpnext\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Kayedspace\\Erpnext\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Kayedspace\\Erpnext\\ErpnextServiceProvider"
+            ],
+            "aliases": {
+                "Erpnext": "Kayedspace\\Erpnext\\Facades\\Erpnext"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "homepage": "https://github.com/kayedspace/laravel-erpnext",
+    "support": {
+        "issues": "https://github.com/kayedspace/laravel-erpnext/issues",
+        "source": "https://github.com/kayedspace/laravel-erpnext"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0"
+    },
+    "scripts": {
+        "test": "pest",
+        "test:coverage": "pest --coverage",
+        "lint": "pint",
+        "lint:test": "pint --test",
+        "analyse": "phpstan analyse",
+        "check": [
+            "@lint:test",
+            "@analyse",
+            "@test"
+        ]
+    },
+    "scripts-descriptions": {
+        "check": "Everything CI runs: code style, static analysis, tests."
+    }
+}
