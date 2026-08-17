@@ -19,6 +19,7 @@ use Kayedspace\Erpnext\Files\PendingUpload;
  * @method static void delete(string $doctype, string $name)
  * @method static array<string, mixed> call(string $doctype, string $name, string $method, array<string, mixed> $args = [])
  * @method static array<int, array<string, mixed>> search(string $doctype, array<string, mixed> $parameters)
+ * @method static int count(string $doctype, array<string, mixed> $parameters = [])
  * @method static PendingUpload upload()
  * @method static array<string, mixed> uploadFile(array<string, mixed> $form, string $contents, string $filename)
  * @method static string downloadFile(string $fileUrl)
