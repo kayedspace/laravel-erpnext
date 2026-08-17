@@ -108,6 +108,24 @@ $fifth = $page->forPage(5);  // One request for page 5.
 Neither `paginate()` nor `count()` downloads all matching documents. The count runs in
 Frappe's database and PHP holds only the current page.
 
+**Expand linked documents when you need them.** Select link fields on list requests, or
+expand every link on a single document:
+
+```php
+$tasks = Erpnext::query('ToDo')
+    ->fields(['name', 'priority'])
+    ->expand(['priority'])
+    ->paginate(25);
+
+$task = Erpnext::doctype('ToDo')->expandLinks()->findOrFail('TASK-1');
+$same = Erpnext::doctype('ToDo')->findOrFail('TASK-1', expandLinks: true);
+```
+
+> [!WARNING]
+> Use `expandLinks()` only with Frappe 15.104.0+ or 16.14.0+. Earlier releases contain
+> [CVE-2026-39351](https://github.com/frappe/frappe/security/advisories/GHSA-8ggw-hfr6-rw3x),
+> which can disclose linked documents without the expected permission checks.
+
 **Four authentication schemes.**
 
 | `auth_method` | Requires | Sends |

@@ -60,11 +60,12 @@ class ErpClient
      * @throws ConnectionException
      * @throws ErpException
      */
-    public function find(string $doctype, string $name): ?array
+    public function find(string $doctype, string $name, bool $expandLinks = false): ?array
     {
         $response = $this->send(
             fn (PendingRequest $request, Connection $c): Response => $request->get(
                 $c->resourceUrl($doctype).'/'.rawurlencode($name),
+                $expandLinks ? ['expand_links' => 'True'] : [],
             ),
         );
 
@@ -84,9 +85,10 @@ class ErpClient
      * @throws ConnectionException
      * @throws ErpException
      */
-    public function findOrFail(string $doctype, string $name): array
+    public function findOrFail(string $doctype, string $name, bool $expandLinks = false): array
     {
-        return $this->find($doctype, $name) ?? throw DocumentNotFoundException::for($doctype, $name);
+        return $this->find($doctype, $name, $expandLinks)
+            ?? throw DocumentNotFoundException::for($doctype, $name);
     }
 
     /**

@@ -295,6 +295,37 @@ it('requires a positive navigation page', function (): void {
     Http::assertSentCount(1);
 });
 
+it('preserves selected expansions on pages but omits them from counts', function (): void {
+    Http::fake(function (Request $request) {
+        return str_contains($request->url(), 'frappe.desk.reportview.get_count')
+            ? Http::response(['message' => 3])
+            : Http::response(['data' => [['name' => 'CUST-1']]]);
+    });
+
+    $page = Erpnext::query('Customer')
+        ->fields(['name', 'territory'])
+        ->expand(['territory'])
+        ->paginate(2);
+    $page->next();
+
+    $countRequests = Http::recorded(fn (Request $request): bool => str_contains(
+        $request->url(),
+        'frappe.desk.reportview.get_count',
+    ));
+    $pageRequests = Http::recorded(fn (Request $request): bool => str_contains(
+        $request->url(),
+        '/api/resource/Customer',
+    ));
+
+    expect($countRequests)->toHaveCount(1)
+        ->and(queryOf($countRequests->first()[0]))->not->toHaveKey('expand')
+        ->and($pageRequests)->toHaveCount(2);
+
+    foreach ($pageRequests as [$request]) {
+        expect(queryOf($request)['expand'])->toBe('["territory"]');
+    }
+});
+
 it('leaves the builder untouched when plucking', function (): void {
     Http::fake(['*' => Http::response(['data' => [['name' => 'CUST-1']]])]);
 

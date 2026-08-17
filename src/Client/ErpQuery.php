@@ -26,6 +26,9 @@ class ErpQuery
     /** @var array<int, string> */
     private array $fields = ['*'];
 
+    /** @var array<int, string> */
+    private array $expands = [];
+
     private int $limit = 100;
 
     private ?int $offset = null;
@@ -72,6 +75,16 @@ class ErpQuery
     public function fields(array $fields): static
     {
         $this->fields = $fields;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<int, string>  $fields
+     */
+    public function expand(array $fields): static
+    {
+        $this->expands = array_values($fields);
 
         return $this;
     }
@@ -273,6 +286,7 @@ class ErpQuery
             'filters' => $this->encode($this->filters),
             'or_filters' => $this->encode($this->orFilters),
             'fields' => json_encode($this->fields, JSON_THROW_ON_ERROR),
+            'expand' => $this->expands === [] ? null : json_encode($this->expands, JSON_THROW_ON_ERROR),
             'order_by' => $this->orderBy,
             'limit_start' => $this->offset,
             'limit_page_length' => $this->limit,

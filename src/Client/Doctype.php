@@ -23,6 +23,8 @@ use Kayedspace\Erpnext\Exceptions\ErpException;
  */
 class Doctype
 {
+    private bool $shouldExpandLinks = false;
+
     public function __construct(
         private readonly ErpClient $client,
         private readonly string $name,
@@ -44,9 +46,9 @@ class Doctype
      * @throws ConnectionException
      * @throws ErpException
      */
-    public function find(string $name): ?array
+    public function find(string $name, bool $expandLinks = false): ?array
     {
-        return $this->client->find($this->name, $name);
+        return $this->client->find($this->name, $name, $this->shouldExpandLinks || $expandLinks);
     }
 
     /**
@@ -55,9 +57,20 @@ class Doctype
      * @throws ConnectionException
      * @throws ErpException
      */
-    public function findOrFail(string $name): array
+    public function findOrFail(string $name, bool $expandLinks = false): array
     {
-        return $this->client->findOrFail($this->name, $name);
+        return $this->client->findOrFail($this->name, $name, $this->shouldExpandLinks || $expandLinks);
+    }
+
+    /**
+     * Expand every link field on the next read without changing this handle.
+     */
+    public function expandLinks(): static
+    {
+        $clone = clone $this;
+        $clone->shouldExpandLinks = true;
+
+        return $clone;
     }
 
     /**

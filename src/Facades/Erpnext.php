@@ -12,8 +12,8 @@ use Kayedspace\Erpnext\Files\PendingUpload;
 /**
  * @method static Doctype doctype(string $doctype)
  * @method static ErpQuery query(string $doctype)
- * @method static array<string, mixed>|null find(string $doctype, string $name)
- * @method static array<string, mixed> findOrFail(string $doctype, string $name)
+ * @method static array<string, mixed>|null find(string $doctype, string $name, bool $expandLinks = false)
+ * @method static array<string, mixed> findOrFail(string $doctype, string $name, bool $expandLinks = false)
  * @method static array<string, mixed> create(string $doctype, array<string, mixed> $data, ?string $uniqueBy = null)
  * @method static array<string, mixed> update(string $doctype, string $name, array<string, mixed> $data, ?string $uniqueBy = null)
  * @method static void delete(string $doctype, string $name)
