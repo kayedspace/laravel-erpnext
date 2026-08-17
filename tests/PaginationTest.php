@@ -2,6 +2,8 @@
 
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Kayedspace\Erpnext\Client\Paginator;
+use Kayedspace\Erpnext\Exceptions\ErpException;
 use Kayedspace\Erpnext\Facades\Erpnext;
 
 /**
@@ -147,26 +149,150 @@ it('starts from the builder offset when one was set', function (): void {
 });
 
 it('counts the whole result set rather than one page', function (): void {
-    Http::fake(['*' => Http::response([
-        'data' => array_map(fn (int $i): array => ['name' => "CUST-{$i}"], range(1, 250)),
-    ])]);
+    Http::fake(['*' => Http::response(['message' => 250])]);
 
-    expect(Erpnext::query('Customer')->count())->toBe(250);
+    expect(Erpnext::query('Customer')
+        ->where('disabled', 0)
+        ->orWhere('territory', 'Egypt')
+        ->count())->toBe(250);
 
-    // limit_page_length=0 is how Frappe is asked for every row, and only `name` is
-    // fetched because nothing else is being counted.
-    Http::assertSent(fn (Request $request): bool => queryOf($request)['limit_page_length'] === '0'
-        && queryOf($request)['fields'] === '["name"]');
+    Http::assertSent(fn (Request $request): bool => str_contains(
+        $request->url(),
+        '/api/method/frappe.desk.reportview.get_count',
+    ) && queryOf($request)['doctype'] === 'Customer'
+        && queryOf($request)['filters'] === '[["disabled","=","0"]]'
+        && queryOf($request)['or_filters'] === '[["territory","=","Egypt"]]'
+        && ! isset(queryOf($request)['fields'], queryOf($request)['limit_page_length']));
+    Http::assertSentCount(1);
 });
 
 it('leaves the builder untouched when counting', function (): void {
-    Http::fake(['*' => Http::response(['data' => []])]);
+    Http::fake(['*' => Http::response(['message' => 0])]);
 
     $query = Erpnext::query('Customer')->fields(['name', 'customer_name'])->limit(5);
     $query->count();
 
     expect($query->toRequestParams()['fields'])->toBe('["name","customer_name"]')
         ->and($query->toRequestParams()['limit_page_length'])->toBe(5);
+});
+
+it('rejects an invalid server count', function (mixed $count): void {
+    Http::fake(['*' => Http::response(['message' => $count])]);
+
+    expect(fn (): int => Erpnext::query('Customer')->count())
+        ->toThrow(ErpException::class);
+})->with([[-1], [1.5], [null], [['count' => 1]]]);
+
+it('fetches only the requested page after the server-side count', function (): void {
+    Http::fake(function (Request $request) {
+        if (str_contains($request->url(), 'frappe.desk.reportview.get_count')) {
+            return Http::response(['message' => 52]);
+        }
+
+        return Http::response(['data' => [
+            ['name' => 'CUST-51'],
+            ['name' => 'CUST-52'],
+        ]]);
+    });
+
+    $page = Erpnext::query('Customer')->paginate(perPage: 25, page: 3);
+
+    expect($page)->toBeInstanceOf(Paginator::class)
+        ->and($page->items())->toBe([['name' => 'CUST-51'], ['name' => 'CUST-52']])
+        ->and($page->total())->toBe(52)
+        ->and($page->perPage())->toBe(25)
+        ->and($page->currentPage())->toBe(3)
+        ->and($page->lastPage())->toBe(3)
+        ->and($page->firstItem())->toBe(51)
+        ->and($page->lastItem())->toBe(52)
+        ->and($page->previousPage())->toBe(2)
+        ->and($page->nextPage())->toBeNull()
+        ->and($page->onLastPage())->toBeTrue()
+        ->and($page)->toHaveCount(2)
+        ->and(iterator_to_array($page))->toBe($page->items())
+        ->and($page->toArray())->toMatchArray([
+            'current_page' => 3,
+            'per_page' => 25,
+            'from' => 51,
+            'to' => 52,
+            'total' => 52,
+            'last_page' => 3,
+            'previous_page' => 2,
+            'next_page' => null,
+        ]);
+
+    Http::assertSent(fn (Request $request): bool => str_contains($request->url(), '/api/resource/Customer')
+        && queryOf($request)['limit_start'] === '50'
+        && queryOf($request)['limit_page_length'] === '25');
+    Http::assertSentCount(2);
+});
+
+it('navigates by fetching one page without recounting', function (): void {
+    Http::fake(function (Request $request) {
+        if (str_contains($request->url(), 'frappe.desk.reportview.get_count')) {
+            return Http::response(['message' => 5]);
+        }
+
+        $start = (int) (queryOf($request)['limit_start'] ?? 0);
+        $rows = [];
+
+        foreach (range($start + 1, min($start + 2, 5)) as $row) {
+            $rows[] = ['name' => "CUST-{$row}"];
+        }
+
+        return Http::response(['data' => $rows]);
+    });
+
+    $first = Erpnext::query('Customer')->paginate(2);
+    $second = $first->next();
+    $third = $first->forPage(3);
+    $firstAgain = $second?->previous();
+
+    expect($first->onFirstPage())->toBeTrue()
+        ->and($first->previous())->toBeNull()
+        ->and($first->forPage(1))->toBe($first)
+        ->and($second?->currentPage())->toBe(2)
+        ->and($second?->items())->toBe([['name' => 'CUST-3'], ['name' => 'CUST-4']])
+        ->and($third->items())->toBe([['name' => 'CUST-5']])
+        ->and($third->next())->toBeNull()
+        ->and($firstAgain?->items())->toBe($first->items());
+
+    Http::assertSentCount(5);
+    Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'frappe.desk.reportview.get_count'));
+    expect(Http::recorded(fn (Request $request): bool => str_contains(
+        $request->url(),
+        'frappe.desk.reportview.get_count',
+    )))->toHaveCount(1);
+});
+
+it('skips the page request when the count is zero', function (): void {
+    Http::fake(['*' => Http::response(['message' => 0])]);
+
+    $page = Erpnext::query('Customer')->paginate();
+
+    expect($page->items())->toBe([])
+        ->and($page->total())->toBe(0)
+        ->and($page->firstItem())->toBeNull()
+        ->and($page->lastItem())->toBeNull()
+        ->and($page->lastPage())->toBe(1);
+    Http::assertSentCount(1);
+});
+
+it('requires positive page values', function (int $perPage, int $page): void {
+    Http::fake();
+
+    expect(fn (): Paginator => Erpnext::query('Customer')->paginate($perPage, $page))
+        ->toThrow(InvalidArgumentException::class);
+    Http::assertNothingSent();
+})->with([[0, 1], [15, 0], [-1, 1]]);
+
+it('requires a positive navigation page', function (): void {
+    Http::fake(['*' => Http::response(['message' => 0])]);
+
+    $page = Erpnext::query('Customer')->paginate();
+
+    expect(fn (): Paginator => $page->forPage(0))->toThrow(InvalidArgumentException::class);
+    Http::assertSentCount(1);
 });
 
 it('leaves the builder untouched when plucking', function (): void {

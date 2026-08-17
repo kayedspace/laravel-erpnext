@@ -304,6 +304,35 @@ class ErpClient
     }
 
     /**
+     * Ask Frappe to count matching documents in SQL without returning the rows.
+     *
+     * @param  array<string, mixed>  $parameters
+     *
+     * @throws ConnectionException
+     * @throws ErpException
+     */
+    public function count(string $doctype, array $parameters = []): int
+    {
+        $response = $this->send(
+            fn (PendingRequest $request, Connection $c): Response => $request->get(
+                $c->methodUrl('frappe.desk.reportview.get_count'),
+                ['doctype' => $doctype, ...$parameters],
+            ),
+        );
+
+        $body = $this->responseData($response);
+        $this->ensureSuccessful($response, $body, 'message');
+
+        $count = $body['message'];
+
+        if (! ((is_int($count) && $count >= 0) || (is_string($count) && ctype_digit($count)))) {
+            throw new ErpException('ERPNext returned an invalid document count.');
+        }
+
+        return (int) $count;
+    }
+
+    /**
      * Issue a request, and if the site rejects our credentials, re-establish them and
      * try once more.
      *
@@ -458,11 +487,11 @@ class ErpClient
      *
      * @throws ErpException
      */
-    private function ensureSuccessful(Response $response, array $body): void
+    private function ensureSuccessful(Response $response, array $body, string $resultKey = 'data'): void
     {
         if (
             $response->successful()
-            && isset($body['data'])
+            && isset($body[$resultKey])
             && ! array_key_exists('exception', $body)
             && ! array_key_exists('_server_messages', $body)
         ) {

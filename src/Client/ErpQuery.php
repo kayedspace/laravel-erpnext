@@ -4,6 +4,7 @@ namespace Kayedspace\Erpnext\Client;
 
 use Generator;
 use Illuminate\Http\Client\ConnectionException;
+use InvalidArgumentException;
 use Kayedspace\Erpnext\Exceptions\ErpException;
 
 /**
@@ -132,18 +133,40 @@ class ErpQuery
     /**
      * The total number of matching documents on the site, not the size of a page.
      *
-     * Frappe answers this with `limit_page_length=0` — all rows, one field — which is
-     * cheap on the wire but still a full scan server-side. Prefer {@see exists()} when
-     * the answer you actually want is "any?".
+     * Frappe performs the count server-side and returns one integer. Prefer
+     * {@see exists()} when the answer you actually want is "any?".
      *
      * @throws ConnectionException
      * @throws ErpException
      */
     public function count(): int
     {
-        return count(
-            (clone $this)->fields(['name'])->limit(0)->offset(0)->get()
-        );
+        return $this->client->count($this->doctype, array_filter([
+            'filters' => $this->encode($this->filters),
+            'or_filters' => $this->encode($this->orFilters),
+        ]));
+    }
+
+    /**
+     * Fetch one page and its server-side total without loading the full result set.
+     *
+     * @throws ConnectionException
+     * @throws ErpException
+     */
+    public function paginate(int $perPage = 15, int $page = 1): Paginator
+    {
+        if ($perPage < 1 || $page < 1) {
+            throw new InvalidArgumentException('Page and per-page values must be at least 1.');
+        }
+
+        $query = clone $this;
+        $total = $query->count();
+        $items = $total === 0 ? [] : (clone $query)
+            ->limit($perPage)
+            ->offset(($page - 1) * $perPage)
+            ->get();
+
+        return new Paginator($query, $items, $total, $perPage, $page);
     }
 
     /**
