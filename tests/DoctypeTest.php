@@ -47,6 +47,32 @@ it('reports a missing document as null, or throws on demand', function (): void 
         ->toThrow(DocumentNotFoundException::class, 'ERPNext Lead [NOPE] was not found.');
 });
 
+it('expands links through named and fluent reads without leaking state', function (): void {
+    Http::fake(['*' => Http::response(['data' => [
+        'name' => 'LEAD-1',
+        'owner' => ['name' => 'user@example.test'],
+    ]])]);
+
+    $lead = Erpnext::doctype('Lead');
+    $lead->find('LEAD-1', expandLinks: true);
+    $lead->expandLinks()->findOrFail('LEAD-2');
+    Erpnext::find('Lead', 'LEAD-3', expandLinks: true);
+    $lead->find('LEAD-4');
+
+    $requests = Http::recorded()->map(function (array $record): array {
+        parse_str((string) parse_url($record[0]->url(), PHP_URL_QUERY), $query);
+
+        return $query;
+    })->all();
+
+    expect($requests)->toBe([
+        ['expand_links' => 'True'],
+        ['expand_links' => 'True'],
+        ['expand_links' => 'True'],
+        [],
+    ]);
+});
+
 it('creates, updates and deletes', function (): void {
     Http::fake(['*' => Http::response(['data' => ['name' => 'LEAD-1']])]);
 

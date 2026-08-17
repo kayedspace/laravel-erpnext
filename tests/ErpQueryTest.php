@@ -75,6 +75,13 @@ it('carries fields, ordering, limit and offset', function (): void {
         ->and($params['limit_start'])->toBe(50);
 });
 
+it('serialises selected link expansions as a json array', function (): void {
+    $query = query()->fields(['name', 'priority'])->expand(['priority']);
+
+    expect($query->toRequestParams()['expand'])->toBe('["priority"]')
+        ->and($query->expand([])->toRequestParams())->not->toHaveKey('expand');
+});
+
 it('defaults ordering to descending', function (): void {
     expect(query()->orderBy('modified')->toRequestParams()['order_by'])->toBe('modified desc');
 });

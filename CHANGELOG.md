@@ -13,6 +13,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Lightweight `paginate()` results with totals, page metadata and immutable
   `next()`, `previous()` and `forPage()` navigation.
+- Selective list-field expansion with `expand()`, plus opt-in full document link
+  expansion through `expandLinks()` and named read options.
 
 ### Changed
 
