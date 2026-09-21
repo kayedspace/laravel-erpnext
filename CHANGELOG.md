@@ -7,6 +7,22 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-17
+
+### Added
+
+- Lightweight `paginate()` results with totals, page metadata and immutable
+  `next()`, `previous()` and `forPage()` navigation.
+- Selective list-field expansion with `expand()`, plus opt-in full document link
+  expansion through `expandLinks()` and named read options.
+
+### Changed
+
+- `count()` now uses Frappe's server-side SQL count instead of downloading every
+  matching document name.
+
+## [0.1] - 2026-08-14
+
 ### Added
 
 - Generic doctype access: `Erpnext::doctype('Any Doctype')` for find, create, update,

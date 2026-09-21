@@ -90,7 +90,41 @@ Erpnext::doctype('Sales Invoice')->query()->where('status', 'Overdue')->each(
 ```
 
 `each()`, `chunk()` and `lazy()` request one page at a time and hold one page in memory.
-`count()` is the site-wide total, not the size of the page you happened to fetch.
+For numbered navigation, `paginate()` asks Frappe for one server-side count and fetches
+only the requested page:
+
+```php
+$page = Erpnext::query('Customer')->paginate(perPage: 25, page: 3);
+
+$page->items();        // At most 25 customers.
+$page->total();        // Scalar count returned by Frappe.
+$page->previousPage(); // 2
+$page->nextPage();     // 4, or null on the last page.
+
+$next = $page->next();       // One request for page 4; no repeated count.
+$fifth = $page->forPage(5);  // One request for page 5.
+```
+
+Neither `paginate()` nor `count()` downloads all matching documents. The count runs in
+Frappe's database and PHP holds only the current page.
+
+**Expand linked documents when you need them.** Select link fields on list requests, or
+expand every link on a single document:
+
+```php
+$tasks = Erpnext::query('ToDo')
+    ->fields(['name', 'priority'])
+    ->expand(['priority'])
+    ->paginate(25);
+
+$task = Erpnext::doctype('ToDo')->expandLinks()->findOrFail('TASK-1');
+$same = Erpnext::doctype('ToDo')->findOrFail('TASK-1', expandLinks: true);
+```
+
+> [!WARNING]
+> Use `expandLinks()` only with Frappe 15.104.0+ or 16.14.0+. Earlier releases contain
+> [CVE-2026-39351](https://github.com/frappe/frappe/security/advisories/GHSA-8ggw-hfr6-rw3x),
+> which can disclose linked documents without the expected permission checks.
 
 **Four authentication schemes.**
 

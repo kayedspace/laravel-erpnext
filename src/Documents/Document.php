@@ -66,9 +66,9 @@ abstract class Document implements Arrayable, ArrayAccess, JsonSerializable
      * @throws ConnectionException
      * @throws ErpException
      */
-    public static function find(string $name): ?static
+    public static function find(string $name, bool $expandLinks = false): ?static
     {
-        $attributes = static::client()->find(static::doctype(), $name);
+        $attributes = static::client()->find(static::doctype(), $name, $expandLinks);
 
         return $attributes === null ? null : new static($attributes, exists: true);
     }
@@ -77,9 +77,10 @@ abstract class Document implements Arrayable, ArrayAccess, JsonSerializable
      * @throws ConnectionException
      * @throws ErpException
      */
-    public static function findOrFail(string $name): static
+    public static function findOrFail(string $name, bool $expandLinks = false): static
     {
-        return static::find($name) ?? throw DocumentNotFoundException::for(static::doctype(), $name);
+        return static::find($name, $expandLinks)
+            ?? throw DocumentNotFoundException::for(static::doctype(), $name);
     }
 
     /**
@@ -146,9 +147,13 @@ abstract class Document implements Arrayable, ArrayAccess, JsonSerializable
      * @throws ConnectionException
      * @throws ErpException
      */
-    public function refresh(): static
+    public function refresh(bool $expandLinks = false): static
     {
-        $this->attributes = static::client()->findOrFail(static::doctype(), $this->requireName());
+        $this->attributes = static::client()->findOrFail(
+            static::doctype(),
+            $this->requireName(),
+            $expandLinks,
+        );
         $this->exists = true;
 
         return $this;

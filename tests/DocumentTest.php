@@ -53,6 +53,24 @@ it('returns null for a missing document and throws on findOrFail', function (): 
     expect(fn () => Customer::findOrFail('NOPE'))->toThrow(DocumentNotFoundException::class);
 });
 
+it('expands links on typed finds and refreshes', function (): void {
+    Http::fake(['*' => Http::response(['data' => [
+        'name' => 'CUST-1',
+        'territory' => ['name' => 'Egypt'],
+    ]])]);
+
+    $customer = Customer::findOrFail('CUST-1', expandLinks: true);
+    $customer->refresh(expandLinks: true);
+
+    expect($customer->get('territory'))->toBe(['name' => 'Egypt']);
+    Http::assertSentCount(2);
+    Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'expand_links=True'));
+    expect(Http::recorded(fn (Request $request): bool => str_contains(
+        $request->url(),
+        'expand_links=True',
+    )))->toHaveCount(2);
+});
+
 it('hydrates from a cached payload without any http', function (): void {
     Http::fake();
 
