@@ -82,6 +82,45 @@ it('serialises selected link expansions as a json array', function (): void {
         ->and($query->expand([])->toRequestParams())->not->toHaveKey('expand');
 });
 
+it('keeps unicode unescaped in every json query parameter', function (): void {
+    $name = 'م.علي يوسف';
+    $params = query()
+        ->where('custom_platform_id', '=', 795)
+        ->orWhere('name', '=', $name)
+        ->fields(['name'])
+        ->expand(['name'])
+        ->toRequestParams();
+
+    expect($params['filters'])->toBe('[["custom_platform_id","=",795]]')
+        ->and($params['or_filters'])->toBe('[["name","=","م.علي يوسف"]]')
+        ->and($params['fields'])->toBe('["name"]')
+        ->and($params['expand'])->toBe('["name"]');
+});
+
+it('sends unicode filters as utf-8 query data instead of json escapes', function (): void {
+    Http::preventStrayRequests();
+    Http::fake(['*' => Http::response(['data' => []])]);
+
+    $name = 'م.علي يوسف';
+
+    query()
+        ->orWhere('custom_platform_id', '=', 795)
+        ->orWhere('name', '=', $name)
+        ->limit(1)
+        ->get();
+
+    Http::assertSent(function (Request $request) use ($name): bool {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $parameters);
+
+        return str_contains($request->url(), rawurlencode($name))
+            && ! str_contains($request->url(), '%5Cu')
+            && json_decode($parameters['or_filters'], true, flags: JSON_THROW_ON_ERROR) === [
+                ['custom_platform_id', '=', 795],
+                ['name', '=', $name],
+            ];
+    });
+});
+
 it('defaults ordering to descending', function (): void {
     expect(query()->orderBy('modified')->toRequestParams()['order_by'])->toBe('modified desc');
 });

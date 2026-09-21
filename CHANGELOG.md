@@ -7,7 +7,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [0.1.1] - 2026-08-17
+## [0.2.0] - 2026-09-21
 
 ### Added
 
@@ -20,6 +20,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `count()` now uses Frappe's server-side SQL count instead of downloading every
   matching document name.
+
+### Fixed
+
+- Query JSON preserves Unicode characters, including Arabic filter values, instead of
+  serialising them as `\\uXXXX` escapes.
 
 ## [0.1] - 2026-08-14
 
