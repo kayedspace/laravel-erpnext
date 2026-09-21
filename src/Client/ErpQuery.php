@@ -285,8 +285,8 @@ class ErpQuery
         return array_filter([
             'filters' => $this->encode($this->filters),
             'or_filters' => $this->encode($this->orFilters),
-            'fields' => json_encode($this->fields, JSON_THROW_ON_ERROR),
-            'expand' => $this->expands === [] ? null : json_encode($this->expands, JSON_THROW_ON_ERROR),
+            'fields' => $this->jsonEncode($this->fields),
+            'expand' => $this->expands === [] ? null : $this->jsonEncode($this->expands),
             'order_by' => $this->orderBy,
             'limit_start' => $this->offset,
             'limit_page_length' => $this->limit,
@@ -298,6 +298,11 @@ class ErpQuery
      */
     private function encode(array $conditions): ?string
     {
-        return $conditions === [] ? null : json_encode($conditions, JSON_THROW_ON_ERROR);
+        return $conditions === [] ? null : $this->jsonEncode($conditions);
+    }
+
+    private function jsonEncode(mixed $value): string
+    {
+        return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     }
 }
