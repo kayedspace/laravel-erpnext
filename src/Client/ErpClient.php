@@ -482,8 +482,12 @@ class ErpClient
     }
 
     /**
-     * ERPNext answers 200 with an `exception` or `_server_messages` body on a rejected
-     * document, so a successful status code alone proves nothing.
+     * ERPNext can answer 200 with an `exception` body on a rejected document, so a
+     * successful status code alone proves nothing.
+     *
+     * `_server_messages` is not a failure signal on its own: a saved document carries
+     * any `msgprint` its hooks raised, e.g. "Item Price created at rate 500.0" on a new
+     * Item. A real rejection comes with an `exception` or a non-2xx status.
      *
      * @param  array<string, mixed>  $body
      *
@@ -495,7 +499,6 @@ class ErpClient
             $response->successful()
             && isset($body[$resultKey])
             && ! array_key_exists('exception', $body)
-            && ! array_key_exists('_server_messages', $body)
         ) {
             return;
         }

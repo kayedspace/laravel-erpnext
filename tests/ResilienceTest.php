@@ -58,6 +58,23 @@ it('gives up after the configured number of attempts', function (): void {
     Http::assertSentCount(2);
 });
 
+it('accepts a saved document that carries an informational server message', function (): void {
+    configure();
+
+    // What ERPNext answers on a new Item with a standard_rate: saved, plus a green toast.
+    Http::fake(['*' => Http::response([
+        'data' => ['name' => 'CBT Course'],
+        '_server_messages' => json_encode([json_encode([
+            'message' => 'Item Price created at rate 500.0',
+            'indicator' => 'green',
+            'alert' => 1,
+        ])]),
+    ])]);
+
+    expect(Erpnext::doctype('Item')->create(['item_code' => 'CBT Course']))
+        ->toBe(['name' => 'CBT Course']);
+});
+
 it('never retries a rejection that is our own fault', function (): void {
     configure();
 
